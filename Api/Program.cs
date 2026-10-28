@@ -1,3 +1,6 @@
+using Application.Features.Courses.DeleteCourse;
+using Application.Features.Courses.UpdateCourse;
+using Application.Features.Admissions.GetAllAdmissions;
 using Api.Features.Students;
 using Api.Features.Courses;
 using Api.Features.Admissions;
@@ -35,6 +38,12 @@ builder.Services.AddScoped<IQueryHandler<GetAllCoursesQuery, Result<GetAllCourse
 builder.Services.AddScoped<IQueryHandler<GetCourseByIdQuery, Result<GetCourseByIdResponse>>, GetCourseByIdQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<CreateAdmissionCommand, Result<CreateAdmissionResponse>>, CreateAdmissionCommandHandler>();
 builder.Services.AddScoped<IQueryHandler<GetAdmissionByIdQuery, Result<GetAdmissionByIdResponse>>, GetAdmissionByIdQueryHandler>();
+builder.Services.AddScoped<IQueryHandler<GetAllAdmissionsQuery,Result<GetAllAdmissionsResponse>>, 
+GetAllAdmissionsQueryHandler>();
+builder.Services.AddScoped<ICommandHandler<UpdateCourseCommand, Result<UpdateCourseResponse>>,
+UpdateCourseCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<DeleteCourseCommand, Result>,
+DeleteCourseCommandHandler>();
 
 // API
 builder.Services.AddEndpointsApiExplorer();

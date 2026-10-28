@@ -64,6 +64,10 @@ VerticalSlice/
 │       │       ├── GetCourseByIdQueryHandler.cs
 │       │       └── GetCourseByIdResponse.cs
 │       └── Admissions/
+|           |GetAllAdmission/
+|           | |
+|           | |--GetAllAdmissionsQuery.cs
+|           | |--GetAllAdmissionsQueryHandler.cs
 │           ├── CreateAdmission/
 │           │   ├── CreateAdmissionCommand.cs
 │           │   ├── CreateAdmissionCommandHandler.cs
@@ -134,6 +138,7 @@ VerticalSlice/
 | ------ | -------------------- | -------------------- | --------------------------------------------- |
 | POST   | `/api/students`      | Create a new student | `{ firstName, lastName, email, dateOfBirth }` |
 | GET    | `/api/students/{id}` | Get student by ID    | —                                             |
+|
 
 ### Courses
 
