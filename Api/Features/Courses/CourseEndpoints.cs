@@ -35,7 +35,7 @@ public static class CourseEndpoints
             .WithSummary("Create a new course");
 
         group.MapGet("/{id:guid}", GetById)
-            .WithName("GetByIdRouteName")
+            .WithName("GetCourseById")
             .WithSummary("Get course by ID");
     }
 
@@ -57,7 +57,7 @@ public static class CourseEndpoints
     {
         var result = await handler.HandleAsync(command, cancellationToken);
         return result.IsSuccess
-            ? TypedResults.CreatedAtRoute(result.Value, "GetByIdRouteName", new { id = result.Value!.Id })
+            ? TypedResults.CreatedAtRoute(result.Value, "GetCourseById", new { id = result.Value!.Id })
             : result.ToProblemDetails();
     }
 

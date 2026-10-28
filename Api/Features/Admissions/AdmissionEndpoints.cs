@@ -25,7 +25,7 @@ public static class AdmissionEndpoints
             .WithSummary("Create a new admission with courses");
 
         group.MapGet("/{id:guid}", GetById)
-            .WithName("GetByIdRouteName")
+            .WithName("GetAdmissionById")
             .WithSummary("Get admission by ID with courses");
     }
     private static async Task<IResult> GetAll(
@@ -46,7 +46,7 @@ CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(command, cancellationToken);
         return result.IsSuccess
-            ? TypedResults.CreatedAtRoute(result.Value, "GetByIdRouteName", new { id = result.Value!.Id })
+            ? TypedResults.CreatedAtRoute(result.Value, "GetAdmissionById", new { id = result.Value!.Id })
             : result.ToProblemDetails();
     }
 
