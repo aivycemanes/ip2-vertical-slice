@@ -23,6 +23,11 @@ using Scalar.AspNetCore;
 using Application.Abstractions;
 using Api.Features.Auth;
 using Application.Features.Auth.Register;
+using Application.Features.Auth.Login;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,6 +66,48 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
 builder.Services.AddScoped<ICommandHandler<RegisterCommand, Result<RegisterResponse>>,
 RegisterCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<LoginCommand, Result<LoginResponse>>,
+LoginCommandHandler>();
+var jwtSection = builder.Configuration.GetSection(JwtOptions.SectionName);
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSection["Issuer"],
+        ValidAudience = jwtSection["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+    Encoding.UTF8.GetBytes(jwtSection["SigningKey"]!)),
+        ClockSkew = TimeSpan.FromSeconds(30)
+    };
+});
+builder.Services.AddAuthorization();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, _, _) =>
+    {
+        document.Components ??= new OpenApiComponents();
+        document.Components.SecuritySchemes ??= new Dictionary<string,
+        IOpenApiSecurityScheme>();
+        document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            Description = "Paste the access token from /api/auth/login"
+        };
+        document.Security ??= [];
+        document.Security.Add(new OpenApiSecurityRequirement
+        {
+            [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+        });
+        return Task.CompletedTask;
+    });
+});
 
 // API
 builder.Services.AddEndpointsApiExplorer();
@@ -75,6 +122,8 @@ builder.Services.AddOpenApi(options =>
 });
 
 var app = builder.Build();
+app.UseAuthentication(); // who are you?
+app.UseAuthorization(); // are you allowed?
 
 await app.Services.MigrateAndSeedAsync();
 
