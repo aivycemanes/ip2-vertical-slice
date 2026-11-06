@@ -19,6 +19,7 @@ using FluentValidation;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using Application.Abstractions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +45,7 @@ builder.Services.AddScoped<ICommandHandler<UpdateCourseCommand, Result<UpdateCou
 UpdateCourseCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<DeleteCourseCommand, Result>,
 DeleteCourseCommandHandler>();
+builder.Services.AddScoped<IPasswordHasher, Infrastructure.Authentication.PasswordHasher>();
 
 // API
 builder.Services.AddEndpointsApiExplorer();
