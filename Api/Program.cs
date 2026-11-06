@@ -1,3 +1,4 @@
+using Infrastructure.Authentication;
 using Application.Features.Courses.DeleteCourse;
 using Application.Features.Courses.UpdateCourse;
 using Application.Features.Admissions.GetAllAdmissions;
@@ -20,6 +21,8 @@ using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Application.Abstractions;
+using Api.Features.Auth;
+using Application.Features.Auth.Register;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +49,18 @@ UpdateCourseCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<DeleteCourseCommand, Result>,
 DeleteCourseCommandHandler>();
 builder.Services.AddScoped<IPasswordHasher, Infrastructure.Authentication.PasswordHasher>();
+builder.Services.AddOptions<JwtOptions>()
+.Bind(builder.Configuration.GetSection(JwtOptions.SectionName))
+.Validate(o => !
+string.IsNullOrWhiteSpace(o.SigningKey),
+     "Jwt:SigningKey is required. Set it with: dotnet user-secrets set \"Jwt:SigningKey\"\"<value>\"")
+.Validate(o => System.Text.Encoding.UTF8.GetByteCount(o.SigningKey ?? "") >= 32,
+"Jwt:SigningKey must be at least 256 bits (32 characters).")
+.ValidateOnStart();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<ITokenService, JwtTokenService>();
+builder.Services.AddScoped<ICommandHandler<RegisterCommand, Result<RegisterResponse>>,
+RegisterCommandHandler>();
 
 // API
 builder.Services.AddEndpointsApiExplorer();
@@ -79,5 +94,6 @@ app.MapGet("/", () => "Welcome to the Vertical Slice API! Go to /scalar/v1 for A
 app.MapStudentEndpoints();
 app.MapCourseEndpoints();
 app.MapAdmissionEndpoints();
+app.MapAuthEndpoints();
 
 app.Run();
