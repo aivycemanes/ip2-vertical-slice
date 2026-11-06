@@ -20,6 +20,9 @@ TimeProvider timeProvider) : ITokenService
 new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
 new(JwtRegisteredClaimNames.Email, user.Email),
 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+new(JwtRegisteredClaimNames.Iat,
+    new DateTimeOffset(now).ToUnixTimeSeconds().ToString(),
+    ClaimValueTypes.Integer64),
 new(ClaimTypes.Role, user.Role.ToString()),
 new("full_name", $"{user.FirstName} {user.LastName}")
 };

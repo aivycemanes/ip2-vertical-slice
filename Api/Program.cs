@@ -28,6 +28,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -84,6 +86,39 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     Encoding.UTF8.GetBytes(jwtSection["SigningKey"]!)),
         ClockSkew = TimeSpan.FromSeconds(30)
     };
+options.Events = new JwtBearerEvents
+{
+    OnTokenValidated = async context =>
+    {
+        var dbContext =
+        context.HttpContext.RequestServices.GetRequiredService < Application.Abstractions.Data.IAppDbContext>();
+        var jti = 
+        context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Jti);
+        var sub =
+     context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Sub)
+     ?? context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var iatRaw =
+            context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Iat)
+            ?? context.Principal?.FindFirstValue(ClaimTypes.AuthenticationInstant);
+
+        if (jti is not null && await dbContext.RevokedTokens.AnyAsync(r => r.Jti == jti))
+        {
+            context.Fail("Token has been revoked.");
+            return;
+        }
+        if (sub is not null && Guid.TryParse(sub, out var userId) && iatRaw is not null
+&& long.TryParse(iatRaw, out var iatUnix))
+        {
+            var issuedAtUtc = DateTimeOffset.FromUnixTimeSeconds(iatUnix).UtcDateTime;
+            var user = await dbContext.Users.FindAsync([userId]);
+            if (user?.TokensValidFromUtc is { } validFrom && issuedAtUtc < validFrom)
+            {
+                context.Fail("Token was issued before the user's last sign-out-everywhere.");
+            }
+        }
+    }
+};
 });
 builder.Services.AddAuthorization();
 builder.Services.AddOpenApi(options =>
@@ -120,6 +155,7 @@ builder.Services.AddOpenApi(options =>
         return Task.CompletedTask;
     });
 });
+builder.Services.AddHostedService<Infrastructure.BackgroundJobs.RevokedTokenCleanupService>();
 
 var app = builder.Build();
 app.UseAuthentication(); // who are you?
