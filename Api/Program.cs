@@ -1,36 +1,38 @@
-using Infrastructure.Authentication;
-using Application.Features.Courses.DeleteCourse;
-using Application.Features.Courses.UpdateCourse;
-using Application.Features.Admissions.GetAllAdmissions;
-using Api.Features.Students;
-using Api.Features.Courses;
+using Api.Common.Authorization;
 using Api.Features.Admissions;
+using Api.Features.Auth;
+using Api.Features.Courses;
+using Api.Features.Students;
+using Application.Abstractions;
 using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
+using Application.Features.Admissions.CreateAdmission;
+using Application.Features.Admissions.GetAdmissionById;
+using Application.Features.Admissions.GetAllAdmissions;
+using Application.Features.Auth.Login;
+using Application.Features.Auth.Register;
+using Application.Features.Courses.CreateCourse;
+using Application.Features.Courses.DeleteCourse;
+using Application.Features.Courses.GetAllCourses;
+using Application.Features.Courses.GetCourseById;
+using Application.Features.Courses.UpdateCourse;
 using Application.Features.Students.CreateStudent;
 using Application.Features.Students.GetAllStudents;
 using Application.Features.Students.GetStudentById;
-using Application.Features.Courses.CreateCourse;
-using Application.Features.Courses.GetAllCourses;
-using Application.Features.Courses.GetCourseById;
-using Application.Features.Admissions.CreateAdmission;
-using Application.Features.Admissions.GetAdmissionById;
 using Domain.Common;
 using FluentValidation;
+using Infrastructure.Authentication;
 using Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
-using Scalar.AspNetCore;
-using Application.Abstractions;
-using Api.Features.Auth;
-using Application.Features.Auth.Register;
-using Application.Features.Auth.Login;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using Microsoft.OpenApi;
+using Microsoft.Win32;
+using Scalar.AspNetCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Api.Common.Authorization;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -122,6 +124,7 @@ options.Events = new JwtBearerEvents
 };
 });
 builder.Services.AddAppAuthorization();
+builder.Services.AddSingleton<IAuthorizationHandler, AdmissionOwnerHandler>();
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, _, _) =>
@@ -160,6 +163,25 @@ builder.Services.AddOpenApi(options =>
 builder.Services.AddHostedService<Infrastructure.BackgroundJobs.RevokedTokenCleanupService>();
 
 var app = builder.Build();
+
+app.UseStatusCodePages(async context =>
+{
+var response = context.HttpContext.Response;
+if (response.StatusCode is StatusCodes.Status401Unauthorized
+or StatusCodes.Status403Forbidden)
+{
+    response.ContentType = "application/problem+json";
+    await response.WriteAsJsonAsync(new Microsoft.AspNetCore.Mvc.ProblemDetails
+    {
+        Status = response.StatusCode,
+        Title = response.StatusCode == StatusCodes.Status401Unauthorized
+    ? "Unauthorized" : "Forbidden",
+        Detail = response.StatusCode == StatusCodes.Status401Unauthorized
+    ? "Authentication is required to access this resource."
+    : "You do not have permission to perform this action."
+    });
+    }
+});
 app.UseAuthentication(); // who are you?
 app.UseAuthorization(); // are you allowed?
 
