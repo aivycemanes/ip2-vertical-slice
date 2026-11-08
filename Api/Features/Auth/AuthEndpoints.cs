@@ -92,4 +92,5 @@ ClaimsPrincipal user, IAppDbContext dbContext, CancellationToken cancellationTok
         await dbContext.SaveChangesAsync(cancellationToken);
         return TypedResults.NoContent();
     }
+
 }

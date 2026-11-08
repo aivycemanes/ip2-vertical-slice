@@ -6,6 +6,7 @@ using Application.Abstractions.Messaging;
 using Application.Features.Admissions.CreateAdmission;
 using Application.Features.Admissions.GetAdmissionById;
 using Domain.Common;
+using Api.Common.Authorization;
 
 public static class AdmissionEndpoints
 {
@@ -19,15 +20,18 @@ public static class AdmissionEndpoints
 
         group.MapGet("/", GetAll)
 .WithName("GetAllAdmissions")
-.WithSummary("Get all admissions");
+.WithSummary("Get all admissions")
+.RequireAuthorization(Policies.CanManageAdmissions);
 
         group.MapPost("/", Create)
             .WithName("CreateAdmission")
-            .WithSummary("Create a new admission with courses");
+            .WithSummary("Create a new admission with courses")
+            .RequireAuthorization(Policies.CanManageAdmissions);
 
         group.MapGet("/{id:guid}", GetById)
             .WithName("GetAdmissionById")
-            .WithSummary("Get admission by ID with courses");
+            .WithSummary("Get admission by ID with courses")
+            .RequireAuthorization();
     }
     private static async Task<IResult> GetAll(
 IQueryHandler<GetAllAdmissionsQuery, Result<GetAllAdmissionsResponse>> handler,

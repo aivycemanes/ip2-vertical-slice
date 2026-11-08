@@ -30,6 +30,7 @@ using System.Text;
 using Microsoft.OpenApi;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Api.Common.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -120,7 +121,7 @@ options.Events = new JwtBearerEvents
     }
 };
 });
-builder.Services.AddAuthorization();
+builder.Services.AddAppAuthorization();
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, _, _) =>
@@ -143,6 +144,7 @@ builder.Services.AddOpenApi(options =>
         return Task.CompletedTask;
     });
 });
+
 
 // API
 builder.Services.AddEndpointsApiExplorer();

@@ -7,6 +7,7 @@ using Application.Features.Courses.GetAllCourses;
 using Application.Features.Courses.GetCourseById;
 using Application.Features.Courses.UpdateCourse;
 using Domain.Common;
+using Api.Common.Authorization;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 public static class CourseEndpoints
@@ -25,19 +26,23 @@ public static class CourseEndpoints
 
         group.MapGet("/", GetAll)
             .WithName("GetAllCourses")
-            .WithSummary("Get all courses");
+            .WithSummary("Get all courses")
+            .RequireAuthorization();
 
         group.MapPut("/{id:guid}", Update)
             .WithName("UpdateCourse")
-            .WithSummary("Update an existing course");
+            .WithSummary("Update an existing course")
+            .RequireAuthorization(Policies.CanManageCourses);
 
         group.MapPost("/", Create)
             .WithName("CreateCourse")
-            .WithSummary("Create a new course");
+            .WithSummary("Create a new course")
+            .RequireAuthorization(Policies.CanManageCourses);
 
         group.MapGet("/{id:guid}", GetById)
             .WithName("GetCourseById")
-            .WithSummary("Get course by ID");
+            .WithSummary("Get course by ID")
+            .RequireAuthorization();
     }
 
     private static async Task<IResult> GetAll(

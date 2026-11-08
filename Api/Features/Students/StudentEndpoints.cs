@@ -1,5 +1,6 @@
 namespace Api.Features.Students;
 
+using Api.Common.Authorization;
 using Api.Common.Extensions;
 using Application.Abstractions.Messaging;
 using Application.Features.Students.CreateStudent;
@@ -19,15 +20,18 @@ public static class StudentEndpoints
 
         group.MapGet("/", GetAll)
             .WithName("GetAllStudents")
-            .WithSummary("Get all students");
+            .WithSummary("Get all students")
+            .RequireAuthorization(Policies.CanManageStudents);
 
         group.MapPost("/", Create)
             .WithName("CreateStudent")
-            .WithSummary("Create a new student");
+            .WithSummary("Create a new student")
+            .RequireAuthorization(Policies.CanManageStudents);
 
         group.MapGet("/{id:guid}", GetById)
             .WithName("GetStudentById")
-            .WithSummary("Get student by ID");
+            .WithSummary("Get student by ID")
+            .RequireAuthorization(Policies.CanManageStudents);
 
     }
 
